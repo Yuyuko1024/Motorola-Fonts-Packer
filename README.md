@@ -11,3 +11,7 @@ A simple tool to pack your custom Motorola font package
 
 ## Usage
 - `./main.py` to launch packer main window
+
+## Credit
+- [exTHmUI ThemeMaker](https://github.com/exTHmUI-legacy/ThemeMaker)
+- PyQt5
