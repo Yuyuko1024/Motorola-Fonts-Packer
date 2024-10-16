@@ -34,7 +34,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.btn_clear.clicked.connect(self.clear_textOutput)
         self.action_open_workspace.triggered.connect(self.open_workspace)
         self.action_about.triggered.connect(self.show_about)
-
+        self.action_Qt.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarMenuButton))
         self.action_Qt.triggered.connect(self.show_aboutQt)
         self.edit_font_name.setToolTip("字体包名称，将会作为安装字体包时显示的名称。")
         self.edit_font_target_name.setToolTip("在Motorola手机的字体选择界面显示的字体名称，不可以包含中文和空格以及任何符号。")
