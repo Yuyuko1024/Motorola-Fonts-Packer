@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, Qt
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import QT_VERSION_STR
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMessageBox, QStyle, QDialog, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QStyle, QDialog, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QFileDialog
 from main_window import Ui_MainWindow
 from common import *
@@ -10,6 +9,18 @@ from common import *
 software_version = 1.0
 # 签名参数
 SIGNER_PARAM = "sign --key testkey.pk8 --cert testkey.x509.pem"
+
+# 资源文件访问
+def packer_source_path(path):
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, path)
+
+# 修改工作目录
+cd = packer_source_path('')
+os.chdir(cd)
 
 # 添加 Qt 插件路径到环境变量
 if hasattr(sys, 'frozen'):
@@ -130,7 +141,7 @@ class Packer:
             self.print_output(f"创建临时工作目录: {temp_dir}")
 
             # 复制模板文件夹到临时目录
-            template_dir = os.path.join(os.path.dirname(__file__), "motorola-fonts-template")
+            template_dir = packer_source_path("motorola-fonts-template")
             work_dir = os.path.join(temp_dir, "motorola-fonts-template")
             shutil.copytree(template_dir, work_dir)
 
