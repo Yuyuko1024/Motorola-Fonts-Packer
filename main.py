@@ -193,6 +193,8 @@ class Packer:
         self.doZipAlign(os.path.join(appTmp, "raw.apk"), out)
         self.signAPK(out)
         self.output_widget.append("完成！")
+        ##打包完成后清理现场
+        remove_path(appTmp)
 
     def doAAPT(self, src, out, resapk):
         self.print_output("执行AAPT操作...")
@@ -200,10 +202,10 @@ class Packer:
         check_file(androidManifestFile)
         cmd = " -M \"" + androidManifestFile + "\""
         assetsFile = os.path.join(src, "assets")
-        if (os.path.exists(assetsFile)):
+        if os.path.exists(assetsFile):
             cmd += " -A " + "\"" + assetsFile + "\""
         resFile = os.path.join(src, "res")
-        if (os.path.exists(resFile)):
+        if os.path.exists(resFile):
             cmd += " -S " + "\"" + resFile + "\""
         for res in resapk:
             cmd += " -I " + "\"" + res + "\""
