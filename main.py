@@ -1,6 +1,7 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, Qt
 from PyQt5.QtCore import QT_VERSION_STR
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QMessageBox, QStyle, QDialog, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QFileDialog
 from main_window import Ui_MainWindow
 from common import *
@@ -33,6 +34,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.btn_clear.clicked.connect(self.clear_textOutput)
         self.action_open_workspace.triggered.connect(self.open_workspace)
         self.action_about.triggered.connect(self.show_about)
+
         self.action_Qt.triggered.connect(self.show_aboutQt)
         self.edit_font_name.setToolTip("字体包名称，将会作为安装字体包时显示的名称。")
         self.edit_font_target_name.setToolTip("在Motorola手机的字体选择界面显示的字体名称，不可以包含中文和空格以及任何符号。")
@@ -86,12 +88,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         os.startfile(os.path.abspath(os.path.dirname(__file__)))  # 在Windows上打开文件夹
 
     def show_about(self):
-        QtWidgets.QMessageBox.about(self, "关于",
-                                    f"Motorola Font Packer\n版本: {software_version} \n作者: Yuyuko1024")
+        about_dialog = AboutDialog()
+        about_dialog.exec_()
 
     def show_aboutQt(self):
         QtWidgets.QMessageBox.aboutQt(self,"关于Qt")
 
+class AboutDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("关于")
+        layout = QVBoxLayout()
+
+        label = QLabel()
+        about_text = """
+        <p>Motorola Font Packer</p>
+        <p>一款简单的摩托罗拉手机MyUI字体包打包器</p>
+        <p>GitHub: <a href="https://github.com/Yuyuko1024/Motorola-Fonts-Packer">https://github.com/Yuyuko1024/Motorola-Fonts-Packer</a></p>
+        <p>作者: Yuyuko1024</p>
+        """
+        label.setText(about_text)
+        label.setOpenExternalLinks(True)
+
+        version_label = QLabel()
+        version_label.setText(f"版本: {software_version}")
+
+        layout.addWidget(label)
+        layout.addWidget(version_label)
+        self.setLayout(layout)
 
 class Packer:
     def __init__(self, output_widget):
