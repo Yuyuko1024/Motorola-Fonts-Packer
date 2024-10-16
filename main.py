@@ -170,7 +170,7 @@ class Packer:
 
             # 执行打包操作
             output_apk = os.path.join(output_dir, f"{font_name}.apk")
-            self.pack_main(work_dir, output_apk, ["framework-res.apk"])
+            self.pack_main(work_dir, output_apk)
 
     @staticmethod
     def replace_in_file(file_path, old_string, new_string):
@@ -180,7 +180,7 @@ class Packer:
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(content)
 
-    def pack_main(self, src, out, resapk):
+    def pack_main(self, src, out):
         check_file(src)
         if os.path.exists(out):
             remove_path(out)
