@@ -7,8 +7,6 @@ from common import *
 
 # 软件版本
 software_version = 1.0
-# 签名参数
-SIGNER_PARAM = "sign --key testkey.pk8 --cert testkey.x509.pem"
 
 # 资源文件访问
 def packer_source_path(path):
@@ -21,6 +19,14 @@ def packer_source_path(path):
 # 修改工作目录
 cd = packer_source_path('')
 os.chdir(cd)
+
+# 资源文件索引路径
+FRAMEWORK_RES_PATH = packer_source_path("framework-res.apk")
+SIGN_KEY_PATH = packer_source_path("testkey.pk8")
+SIGN_KEY_CERT_PATH = packer_source_path("testkey.x509.pem")
+
+# 签名参数
+SIGNER_PARAM = f"sign --key {SIGN_KEY_PATH} --cert {SIGN_KEY_CERT_PATH}"
 
 # 添加 Qt 插件路径到环境变量
 if hasattr(sys, 'frozen'):
@@ -183,7 +189,7 @@ class Packer:
         remove_path(appTmp)
         dir2dir(src, appTmp)
         self.output_widget.append("打包中...")
-        self.doAAPT(appTmp, os.path.join(appTmp, "raw.apk"), resapk)
+        self.doAAPT(appTmp, os.path.join(appTmp, "raw.apk"), [FRAMEWORK_RES_PATH])  # 使用FRAMEWORK_RES_PATH
         self.doZipAlign(os.path.join(appTmp, "raw.apk"), out)
         self.signAPK(out)
         self.output_widget.append("完成！")
