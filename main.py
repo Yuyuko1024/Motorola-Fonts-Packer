@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QT_VERSION_STR, QUrl
 from PyQt5.QtWidgets import QApplication, QStyle
@@ -105,8 +108,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.build_output.clear()
 
     def open_workspace(self):
-        # 打开当前文件目录
-        os.startfile(os.path.abspath(os.path.dirname(__file__)))  # 在Windows上打开文件夹
+        work_dir = os.path.abspath(os.path.dirname(__file__))
+        if sys.platform.startswith("win32"):
+            # Windows打开当前文件目录
+            os.startfile(work_dir)  # 在Windows上打开文件夹
+        elif sys.platform.startswith("darwin"):
+            # MacOS打开目录
+            subprocess.call(["open", work_dir])
+        elif sys.platform.startswith("linux"):
+            #Linux打开目录
+            subprocess.Popen(['xdg-open', work_dir])
 
     def show_about(self):
         about_dialog = AboutDialog(self)
