@@ -150,7 +150,7 @@
      <height>26</height>
     </rect>
    </property>
-   <widget class="RoundMenu" name="menu">
+   <widget class="QMenu" name="menu">
     <property name="title">
      <string>文件</string>
     </property>
@@ -158,7 +158,7 @@
     <addaction name="separator"/>
     <addaction name="action_exit"/>
    </widget>
-   <widget class="RoundMenu" name="menu_2">
+   <widget class="QMenu" name="menu_2">
     <property name="title">
      <string>关于</string>
     </property>
@@ -205,11 +205,6 @@
   <customwidget>
    <class>LineEdit</class>
    <extends>QLineEdit</extends>
-   <header>qfluentwidgets</header>
-  </customwidget>
-  <customwidget>
-   <class>RoundMenu</class>
-   <extends>QMenu</extends>
    <header>qfluentwidgets</header>
   </customwidget>
  </customwidgets>

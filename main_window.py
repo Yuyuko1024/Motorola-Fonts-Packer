@@ -84,9 +84,9 @@ class Ui_MainWindow(object):
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
         self.menubar.setObjectName("menubar")
-        self.menu = RoundMenu(self.menubar)
+        self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
-        self.menu_2 = RoundMenu(self.menubar)
+        self.menu_2 = QtWidgets.QMenu(self.menubar)
         self.menu_2.setObjectName("menu_2")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -134,4 +134,4 @@ class Ui_MainWindow(object):
         self.action_exit.setText(_translate("MainWindow", "退出"))
         self.action_Qt.setText(_translate("MainWindow", "关于Qt"))
         self.action_open_tempdir.setText(_translate("MainWindow", "打开临时目录"))
-from qfluentwidgets import LineEdit, PushButton, RoundMenu
+from qfluentwidgets import LineEdit, PushButton
