@@ -10,7 +10,7 @@ from main_window import Ui_MainWindow
 from common import *
 
 # 软件版本
-software_version = 1.0
+software_version = 1.1
 
 # 资源文件访问
 def packer_source_path(path):
