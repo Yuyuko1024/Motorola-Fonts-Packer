@@ -262,29 +262,55 @@ class Packer:
         self.print_output("执行AAPT操作...")
         androidManifestFile = os.path.join(src, "AndroidManifest.xml")
         check_file(androidManifestFile)
-        cmd = " -M \"" + androidManifestFile + "\""
+        cmd = [get_bin("aapt"), "p", "-M", androidManifestFile]
+
         assetsFile = os.path.join(src, "assets")
         if os.path.exists(assetsFile):
-            cmd += " -A " + "\"" + assetsFile + "\""
+            cmd.extend(["-A", assetsFile])
+
         resFile = os.path.join(src, "res")
         if os.path.exists(resFile):
-            cmd += " -S " + "\"" + resFile + "\""
+            cmd.extend(["-S", resFile])
+
         for res in resapk:
-            cmd += " -I " + "\"" + res + "\""
-        cmd += " -F " + "\"" + out + "\""
-        os.system(" ".join((get_bin("aapt"), "p", cmd)))
+            cmd.extend(["-I", res])
+
+        cmd.extend(["-F", out])
+
+        result = self.run_command(cmd)
+        if result['returncode'] != 0:
+            raise Exception(f"AAPT 执行失败:\n {result['stderr']}")
 
     def doZipAlign(self, src, out):
         self.print_output("执行ZipAlign...")
-        os.system(" ".join((get_bin("zipalign"), "4", "\"" + src + "\"", "\"" + out + "\"")))
+        cmd = [get_bin("zipalign"), "4", src, out]
+        result = self.run_command(cmd)
+        if result['returncode'] != 0:
+            raise Exception(f"ZipAlign 执行失败:\n {result['stderr']}")
 
     def signAPK(self, src):
         self.print_output("签名APK...")
-        if is_win():
-            ext = ".bat"
-        else:
-            ext = ""
-        os.system(" ".join((get_bin("apksigner", ext=ext), SIGNER_PARAM, "\"" + src + "\"")))
+        ext = ".bat" if is_win() else ""
+        cmd = [get_bin("apksigner", ext=ext)] + SIGNER_PARAM.split() + [src]
+        result = self.run_command(cmd)
+        if result['returncode'] != 0:
+            raise Exception(f"APK 签名失败:\n {result['stderr']}")
+
+    def run_command(self, cmd):
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        returncode = process.returncode
+
+        if stdout:
+            self.print_output(stdout)
+        if stderr:
+            self.print_output(stderr)
+
+        return {
+            'stdout': stdout,
+            'stderr': stderr,
+            'returncode': returncode
+        }
 
 # main方法
 if __name__ == '__main__':
