@@ -1,8 +1,7 @@
 import subprocess
-import sys
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QT_VERSION_STR, QUrl
+from PyQt5.QtCore import QT_VERSION_STR, QUrl, QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QStyle
 from PyQt5.QtWidgets import QFileDialog
 from qfluentwidgets import Dialog, MessageBoxBase, SubtitleLabel, BodyLabel, HyperlinkLabel
@@ -48,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        self.packer = Packer(self.build_output)
+        self.packer_thread = None
 
         # 连接信号和槽
         self.btn_choose_file.clicked.connect(self.choose_file)
@@ -98,11 +97,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.build_output.append(f"TTF文件路径: {ttf_path}")
         self.build_output.append(f"输出目录: {output_dir}")
 
-        try:
-            self.packer.pack_font(font_name, ttf_path, ttf_filename, font_version, output_dir)
-            self.build_output.append("打包完成")
-        except Exception as e:
-            self.build_output.append(f"打包失败: {str(e)}")
+        self.packer_thread = PackerThread(font_name, ttf_path, ttf_filename, font_version, output_dir)
+        self.packer_thread.progress_signal.connect(self.update_progress)
+        self.packer_thread.finished_signal.connect(self.packing_finished)
+        self.packer_thread.start()
+
+        # 禁用打包按钮，防止重复点击
+        self.btn_pack.setEnabled(False)
+
+    def update_progress(self, message):
+        self.build_output.append(message)
+
+    def packing_finished(self, success, message):
+        self.build_output.append(message)
+        self.btn_pack.setEnabled(True)
+        if success:
+            pack_succ = Dialog("打包完成", "字体包打包成功！", self)
+            pack_succ.cancelButton.hide()
+            pack_succ.exec_()
+        else:
+            pack_err = Dialog("打包失败", message, self)
+            pack_err.cancelButton.hide()
+            pack_err.exec_()
 
     def clear_textOutput(self):
         self.build_output.clear()
@@ -126,6 +142,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def show_aboutQt(self):
         QtWidgets.QMessageBox.aboutQt(self,"关于Qt")
 
+# 关于对话框
 class AboutDialog(MessageBoxBase):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -154,12 +171,38 @@ class AboutDialog(MessageBoxBase):
         self.cancelButton.hide()
         #self.widget.setMinimumSize(350)
 
-class Packer:
-    def __init__(self, output_widget):
-        self.output_widget = output_widget
+# 打包器线程
+class PackerThread(QThread):
+    progress_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal(bool, str)
+
+    def __init__(self, font_name, ttf_path, ttf_filename, pkg_version, output_dir):
+        super().__init__()
+        self.font_name = font_name
+        self.ttf_path = ttf_path
+        self.ttf_filename = ttf_filename
+        self.pkg_version = pkg_version
+        self.output_dir = output_dir
+        self.packer = Packer(self)
+
+    def run(self):
+        try:
+            self.packer.pack_font(self.font_name, self.ttf_path, self.ttf_filename, self.pkg_version,
+                                  self.output_dir)
+            self.finished_signal.emit(True, "打包完成")
+        except Exception as e:
+            self.finished_signal.emit(False, f"打包失败: {str(e)}")
 
     def print_output(self, message):
-        self.output_widget.append(message)
+        self.progress_signal.emit(message)
+
+#打包器主类
+class Packer:
+    def __init__(self, thread):
+        self.thread = thread
+
+    def print_output(self, message):
+        self.thread.print_output(message)
 
     def pack_font(self, font_name, ttf_path, ttf_filename, pkg_version, output_dir):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -204,14 +247,14 @@ class Packer:
         if os.path.exists(out):
             remove_path(out)
         appTmp = tempfile.mkdtemp("", "ThemeMaker_")
-        self.output_widget.append("复制文件...")
+        self.print_output("复制文件...")
         remove_path(appTmp)
         dir2dir(src, appTmp)
-        self.output_widget.append("打包中...")
+        self.print_output("打包中...")
         self.doAAPT(appTmp, os.path.join(appTmp, "raw.apk"), [FRAMEWORK_RES_PATH])  # 使用FRAMEWORK_RES_PATH
         self.doZipAlign(os.path.join(appTmp, "raw.apk"), out)
         self.signAPK(out)
-        self.output_widget.append("完成！")
+        self.print_output("完成！")
         ##打包完成后清理现场
         remove_path(appTmp)
 
@@ -243,7 +286,7 @@ class Packer:
             ext = ""
         os.system(" ".join((get_bin("apksigner", ext=ext), SIGNER_PARAM, "\"" + src + "\"")))
 
-
+# main方法
 if __name__ == '__main__':
     print("PyQt5 version:",QT_VERSION_STR)
     print("Qt plugin path:", qt_plugin_path)
