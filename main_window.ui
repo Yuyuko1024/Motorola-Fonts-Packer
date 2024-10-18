@@ -32,7 +32,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="edit_font_name"/>
+      <widget class="LineEdit" name="edit_font_name"/>
      </item>
     </layout>
    </widget>
@@ -54,10 +54,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="edit_ttf_path"/>
+      <widget class="LineEdit" name="edit_ttf_path"/>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_choose_file">
+      <widget class="PushButton" name="btn_choose_file">
        <property name="text">
         <string>选择文件</string>
        </property>
@@ -76,21 +76,21 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QPushButton" name="btn_clear">
+      <widget class="PushButton" name="btn_clear">
        <property name="text">
         <string>清除输出</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_pack">
+      <widget class="PushButton" name="btn_pack">
        <property name="text">
         <string>打包</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_exit">
+      <widget class="PushButton" name="btn_exit">
        <property name="text">
         <string>退出</string>
        </property>
@@ -126,7 +126,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="edit_font_target_name"/>
+      <widget class="LineEdit" name="edit_font_target_name"/>
      </item>
      <item>
       <widget class="QLabel" name="label_4">
@@ -136,7 +136,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="edit_pkg_version"/>
+      <widget class="LineEdit" name="edit_pkg_version"/>
      </item>
     </layout>
    </widget>
@@ -150,7 +150,7 @@
      <height>26</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="RoundMenu" name="menu">
     <property name="title">
      <string>文件</string>
     </property>
@@ -158,7 +158,7 @@
     <addaction name="separator"/>
     <addaction name="action_exit"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
+   <widget class="RoundMenu" name="menu_2">
     <property name="title">
      <string>关于</string>
     </property>
@@ -196,6 +196,23 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PushButton</class>
+   <extends>QPushButton</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>LineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>RoundMenu</class>
+   <extends>QMenu</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

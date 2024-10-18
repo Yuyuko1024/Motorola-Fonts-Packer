@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QT_VERSION_STR
-from PyQt5.QtWidgets import QApplication, QStyle, QDialog, QVBoxLayout, QLabel
+from PyQt5.QtCore import QT_VERSION_STR, QUrl
+from PyQt5.QtWidgets import QApplication, QStyle
 from PyQt5.QtWidgets import QFileDialog
+from qfluentwidgets import Dialog, MessageBoxBase, SubtitleLabel, BodyLabel, HyperlinkLabel
+
 from main_window import Ui_MainWindow
 from common import *
 
@@ -78,7 +80,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         font_version = self.edit_pkg_version.text()
         if not font_name or not ttf_path or not ttf_filename or not font_version:
             self.build_output.append("错误: 请填写字体包名称,目标字体名,版本号和选择TTF文件")
-            QtWidgets.QMessageBox.critical(self, "错误","请填写字体包名称,目标字体名,版本号和选择TTF文件")
+            err = Dialog("错误","请填写字体包名称,目标字体名,版本号和选择TTF文件", self)
+            err.cancelButton.hide()
+            err.exec_()
             return
 
         # 选择输出目录
@@ -105,35 +109,39 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         os.startfile(os.path.abspath(os.path.dirname(__file__)))  # 在Windows上打开文件夹
 
     def show_about(self):
-        about_dialog = AboutDialog()
-        about_dialog.exec_()
+        about_dialog = AboutDialog(self)
+        about_dialog.exec()
 
     def show_aboutQt(self):
         QtWidgets.QMessageBox.aboutQt(self,"关于Qt")
 
-class AboutDialog(QDialog):
-    def __init__(self):
-        super().__init__()
+class AboutDialog(MessageBoxBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        self.setWindowTitle("关于")
-        layout = QVBoxLayout()
+        self.titleLabel = SubtitleLabel()
+        self.titleLabel.setText("关于")
 
-        label = QLabel()
-        about_text = """
-        <p>Motorola Font Packer</p>
-        <p>一款简单的摩托罗拉手机MyUI字体包打包器</p>
-        <p>GitHub: <a href="https://github.com/Yuyuko1024/Motorola-Fonts-Packer">https://github.com/Yuyuko1024/Motorola-Fonts-Packer</a></p>
-        <p>作者: Yuyuko1024</p>
-        """
-        label.setText(about_text)
-        label.setOpenExternalLinks(True)
+        self.contentLabel = BodyLabel()
+        self.contentLabel.setText(f"Motorola Font Packer\n"
+                           f"一款简单的摩托罗拉手机MyUI字体包打包器\n"
+                           f"作者: Yuyuko1024\n")
+        self.contentLabel.setOpenExternalLinks(True)
 
-        version_label = QLabel()
-        version_label.setText(f"版本: {software_version}")
+        self.linkLabel = (
+            HyperlinkLabel(QUrl("https://github.com/Yuyuko1024/Motorola-Fonts-Packer"),
+                           '点击前往 GitHub'))
+        self.linkLabel.setUnderlineVisible(True)
 
-        layout.addWidget(label)
-        layout.addWidget(version_label)
-        self.setLayout(layout)
+        self.version_label = BodyLabel()
+        self.version_label.setText(f"版本: {software_version}")
+
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.contentLabel)
+        self.viewLayout.addWidget(self.linkLabel)
+        self.viewLayout.addWidget(self.version_label)
+        self.cancelButton.hide()
+        #self.widget.setMinimumSize(350)
 
 class Packer:
     def __init__(self, output_widget):
