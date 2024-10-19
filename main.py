@@ -24,6 +24,27 @@ def packer_source_path(path):
 cd = packer_source_path('')
 os.chdir(cd)
 
+# 在Linux系统下，我们需要对bin设置可执行权限
+def set_bin_permissions(QApplication):
+    if sys.platform.startswith("linux"):
+        try:
+            cmd = ['chmod', '-R', '775', packer_source_path('bin')]
+            result = subprocess.run(cmd,
+                                    universal_newlines=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    check=True)
+            print(result.returncode, result.stdout, result.stderr)
+        except subprocess.CalledProcessError as e:
+            error_dialog = Dialog(
+                "错误",
+                f"无法设置程序文件权限，程序将退出。\n错误信息：{str(e)}",
+                QApplication.activeWindow()
+            )
+            error_dialog.cancelButton.hide()
+            error_dialog.exec_()
+            sys.exit(1)
+
 # 资源文件索引路径
 FRAMEWORK_RES_PATH = packer_source_path("framework-res.apk")
 SIGN_KEY_PATH = packer_source_path("testkey.pk8")
@@ -323,5 +344,6 @@ if __name__ == '__main__':
     # 强制固定使用800x500
     window.setFixedSize(800, 520)
     window.show()
+    set_bin_permissions(app)
     sys.exit(app.exec_())
 
