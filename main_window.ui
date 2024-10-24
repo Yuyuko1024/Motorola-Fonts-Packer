@@ -166,8 +166,16 @@
     <addaction name="separator"/>
     <addaction name="action_Qt"/>
    </widget>
+   <widget class="QMenu" name="menuLanguage">
+    <property name="title">
+     <string>Language</string>
+    </property>
+    <addaction name="actionLangEnglish"/>
+    <addaction name="actionLangChs"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
+   <addaction name="menuLanguage"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_open_workspace">
@@ -193,6 +201,16 @@
   <action name="action_open_tempdir">
    <property name="text">
     <string>打开临时目录</string>
+   </property>
+  </action>
+  <action name="actionLangEnglish">
+   <property name="text">
+    <string>English</string>
+   </property>
+  </action>
+  <action name="actionLangChs">
+   <property name="text">
+    <string>简体中文</string>
    </property>
   </action>
  </widget>

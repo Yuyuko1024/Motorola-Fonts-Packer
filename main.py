@@ -1,7 +1,7 @@
 import subprocess
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QT_VERSION_STR, QUrl, QThread, pyqtSignal
+from PyQt5.QtCore import QT_VERSION_STR, QUrl, QThread, pyqtSignal, QTranslator
 from PyQt5.QtWidgets import QApplication, QStyle
 from PyQt5.QtWidgets import QFileDialog
 from qfluentwidgets import Dialog, MessageBoxBase, SubtitleLabel, BodyLabel, HyperlinkLabel
@@ -69,6 +69,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.packer_thread = None
+        self.ui_trans = QTranslator()
+        self.prg_trans = QTranslator()
 
         # 连接信号和槽
         self.btn_choose_file.clicked.connect(self.choose_file)
@@ -78,21 +80,46 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.action_about.triggered.connect(self.show_about)
         self.action_Qt.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarMenuButton))
         self.action_Qt.triggered.connect(self.show_aboutQt)
-        self.edit_font_name.setToolTip("字体包名称，将会作为安装字体包时显示的名称。")
-        self.edit_font_target_name.setToolTip("在Motorola手机的字体选择界面显示的字体名称，不可以包含中文和空格以及任何符号。")
-        self.edit_pkg_version.setToolTip("字体包版本号，将会作为安装字体包时显示的版本号。")
         self.edit_pkg_version.setText("1.0")
+        self.actionLangChs.triggered.connect(self.set_chs_lang)
+        self.actionLangEnglish.triggered.connect(self.set_eng_lang)
         self.print_sysinfo()
+
+    def show_tooltip(self):
+        self.edit_font_name.setToolTip(self.tr("字体包名称，将会作为安装字体包时显示的名称。"))
+        self.edit_font_target_name.setToolTip(
+            self.tr("在Motorola手机的字体选择界面显示的字体名称，不可以包含中文和空格以及任何符号。"))
+        self.edit_pkg_version.setToolTip(self.tr("字体包版本号，将会作为安装字体包时显示的版本号。"))
+
+    def set_language(self, lang):
+        # 加载 UI 翻译
+        self.ui_trans.load(f'{lang}.qm')
+        QApplication.instance().installTranslator(self.ui_trans)
+
+        # 加载程序翻译
+        self.prg_trans.load(f'{lang}_prg.qm')
+        QApplication.instance().installTranslator(self.prg_trans)
+
+        self.retranslateUi(self)
+        self.show_tooltip()
+        if self.packer_thread:
+            self.packer_thread.packer = Packer(self.packer_thread)
+
+    def set_chs_lang(self):
+        self.set_language('chs')
+
+    def set_eng_lang(self):
+        self.set_language('eng')
 
     def print_sysinfo(self):
         py_version = sys.version
-        self.build_output.append(f"PyQt版本： {QT_VERSION_STR}")
-        self.build_output.append(f"Qt 插件路径: {qt_plugin_path}")
-        self.build_output.append(f"Python 版本: {py_version}")
-        self.build_output.append(f"软件版本: {software_version}")
+        self.build_output.append(self.tr("PyQt版本： {}").format(QT_VERSION_STR))
+        self.build_output.append(self.tr("Qt 插件路径: {}").format(qt_plugin_path))
+        self.build_output.append(self.tr("Python 版本: {}").format(py_version))
+        self.build_output.append(self.tr("软件版本: {}").format(software_version))
 
     def choose_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "选择TTF文件", "", "TTF Files (*.ttf)")
+        file_name, _ = QFileDialog.getOpenFileName(self, self.tr("选择TTF文件"), "", "TTF Files (*.ttf)")
         if file_name:
             self.edit_ttf_path.setText(file_name)
 
@@ -102,21 +129,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ttf_filename = self.edit_font_target_name.text()
         font_version = self.edit_pkg_version.text()
         if not font_name or not ttf_path or not ttf_filename or not font_version:
-            self.build_output.append("错误: 请填写字体包名称,目标字体名,版本号和选择TTF文件")
-            err = Dialog("错误","请填写字体包名称,目标字体名,版本号和选择TTF文件", self)
+            self.build_output.append(self.tr("错误: 请填写字体包名称,目标字体名,版本号和选择TTF文件"))
+            err = Dialog(self.tr("错误"), self.tr("请填写字体包名称,目标字体名,版本号和选择TTF文件"), self)
             err.cancelButton.hide()
             err.exec_()
             return
 
         # 选择输出目录
-        output_dir = QFileDialog.getExistingDirectory(self, "选择字体包输出目录")
+        output_dir = QFileDialog.getExistingDirectory(self, self.tr("选择字体包输出目录"))
         if not output_dir:
             return
 
         # 这里实现打包逻辑
-        self.build_output.append(f"正在打包字体: {font_name}")
-        self.build_output.append(f"TTF文件路径: {ttf_path}")
-        self.build_output.append(f"输出目录: {output_dir}")
+        self.build_output.append(self.tr("正在打包字体: {}").format(font_name))
+        self.build_output.append(self.tr("TTF文件路径: {}").format(ttf_path))
+        self.build_output.append(self.tr("输出目录: {}").format(output_dir))
 
         self.packer_thread = PackerThread(font_name, ttf_path, ttf_filename, font_version, output_dir)
         self.packer_thread.progress_signal.connect(self.update_progress)
@@ -133,11 +160,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.build_output.append(message)
         self.btn_pack.setEnabled(True)
         if success:
-            pack_succ = Dialog("打包完成", "字体包打包成功！", self)
+            pack_succ = Dialog(self.tr("打包完成"), self.tr("字体包打包成功！"), self)
             pack_succ.cancelButton.hide()
             pack_succ.exec_()
         else:
-            pack_err = Dialog("打包失败", message, self)
+            pack_err = Dialog(self.tr("打包失败"), message, self)
             pack_err.cancelButton.hide()
             pack_err.exec_()
 
@@ -169,24 +196,27 @@ class AboutDialog(MessageBoxBase):
         super().__init__(parent)
 
         self.titleLabel = SubtitleLabel()
-        self.titleLabel.setText("关于")
+        self.titleLabel.setText(self.tr("关于"))
 
         self.contentLabel = BodyLabel()
-        self.contentLabel.setText(f"Motorola Font Packer\n"
-                           f"一款简单的摩托罗拉手机MyUI字体包打包器\n"
-                           f"作者: Yuyuko1024\n")
-        self.contentLabel.setOpenExternalLinks(True)
+        self.contentLabel2 = BodyLabel()
+        self.contentLabel3 = BodyLabel()
+        self.contentLabel.setText("Motorola Font Packer")
+        self.contentLabel2.setText(self.tr("一款简单的摩托罗拉手机MyUI字体包打包器"))
+        self.contentLabel3.setText(self.tr("作者: Yuyuko1024"))
 
         self.linkLabel = (
             HyperlinkLabel(QUrl("https://github.com/Yuyuko1024/Motorola-Fonts-Packer"),
-                           '点击前往 GitHub'))
+                           self.tr('点击前往 GitHub')))
         self.linkLabel.setUnderlineVisible(True)
 
         self.version_label = BodyLabel()
-        self.version_label.setText(f"版本: {software_version}")
+        self.version_label.setText(self.tr("版本: {}").format(software_version))
 
         self.viewLayout.addWidget(self.titleLabel)
         self.viewLayout.addWidget(self.contentLabel)
+        self.viewLayout.addWidget(self.contentLabel2)
+        self.viewLayout.addWidget(self.contentLabel3)
         self.viewLayout.addWidget(self.linkLabel)
         self.viewLayout.addWidget(self.version_label)
         self.cancelButton.hide()
@@ -210,9 +240,9 @@ class PackerThread(QThread):
         try:
             self.packer.pack_font(self.font_name, self.ttf_path, self.ttf_filename, self.pkg_version,
                                   self.output_dir)
-            self.finished_signal.emit(True, "打包完成")
+            self.finished_signal.emit(True, self.packer.translate("打包完成"))
         except Exception as e:
-            self.finished_signal.emit(False, f"打包失败: {str(e)}")
+            self.finished_signal.emit(False, self.packer.translate("打包失败: {}").format(str(e)))
 
     def print_output(self, message):
         self.progress_signal.emit(message)
@@ -345,5 +375,6 @@ if __name__ == '__main__':
     window.setFixedSize(800, 520)
     window.show()
     set_bin_permissions(app)
+    window.set_chs_lang()
     sys.exit(app.exec_())
 
