@@ -2,9 +2,8 @@ import subprocess
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QT_VERSION_STR, QUrl, QThread, pyqtSignal, QTranslator
-from PyQt5.QtWidgets import QApplication, QStyle
+from PyQt5.QtWidgets import QApplication, QStyle, QMessageBox, QDialog, QLabel
 from PyQt5.QtWidgets import QFileDialog
-from qfluentwidgets import Dialog, MessageBoxBase, SubtitleLabel, BodyLabel, HyperlinkLabel
 
 from main_window import Ui_MainWindow
 from common import *
@@ -36,14 +35,16 @@ def set_bin_permissions(QApplication):
                                     check=True)
             print(result.returncode, result.stdout, result.stderr)
         except subprocess.CalledProcessError as e:
-            error_dialog = Dialog(
+            errMsgBox = QMessageBox(
+                QMessageBox.Critical,
+                QApplication.activeWindow(),
                 "错误",
-                f"无法设置程序文件权限，程序将退出。\n错误信息：{str(e)}",
-                QApplication.activeWindow()
+                f"无法设置程序文件权限。\n错误信息：{str(e)}"
             )
-            error_dialog.cancelButton.hide()
-            error_dialog.exec_()
-            sys.exit(1)
+            errQuitBtn = errMsgBox.addButton("OK", QMessageBox.AcceptRole)
+            errMsgBox.exec_()
+            if errMsgBox.clickedButton() == errQuitBtn:
+                sys.exit(1)
 
 # 资源文件索引路径
 FRAMEWORK_RES_PATH = packer_source_path("framework-res.apk")
@@ -130,9 +131,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         font_version = self.edit_pkg_version.text()
         if not font_name or not ttf_path or not ttf_filename or not font_version:
             self.build_output.append(self.tr("错误: 请填写字体包名称,目标字体名,版本号和选择TTF文件"))
-            err = Dialog(self.tr("错误"), self.tr("请填写字体包名称,目标字体名,版本号和选择TTF文件"), self)
-            err.cancelButton.hide()
-            err.exec_()
+            err = QMessageBox.warning(self, self.tr("错误"), self.tr("请填写字体包名称,目标字体名,版本号和选择TTF文件"))
             return
 
         # 选择输出目录
@@ -160,13 +159,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.build_output.append(message)
         self.btn_pack.setEnabled(True)
         if success:
-            pack_succ = Dialog(self.tr("打包完成"), self.tr("字体包打包成功！"), self)
-            pack_succ.cancelButton.hide()
-            pack_succ.exec_()
+            pack_succ = QMessageBox.information(
+                self,
+                self.tr("打包完成"),
+                self.tr("字体包打包成功！"),
+                QMessageBox.Yes
+            )
         else:
-            pack_err = Dialog(self.tr("打包失败"), message, self)
-            pack_err.cancelButton.hide()
-            pack_err.exec_()
+            pack_err = QMessageBox.information(
+                self,
+                self.tr("打包失败"),
+                message,
+                QMessageBox.Yes
+            )
 
     def clear_textOutput(self):
         self.build_output.clear()
@@ -184,43 +189,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             subprocess.Popen(['xdg-open', work_dir])
 
     def show_about(self):
-        about_dialog = AboutDialog(self)
-        about_dialog.exec()
+        about_text = (self.tr("一款简单的摩托罗拉手机MyUI字体包打包器")+"\n"+
+                      self.tr("作者: Yuyuko1024")+"\n"+
+                      self.tr("版本: {}").format(software_version))
+        QMessageBox.about(
+            self,
+            "Motorola Font Packer",
+            about_text
+        )
 
     def show_aboutQt(self):
         QtWidgets.QMessageBox.aboutQt(self,"关于Qt")
-
-# 关于对话框
-class AboutDialog(MessageBoxBase):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.titleLabel = SubtitleLabel()
-        self.titleLabel.setText(self.tr("关于"))
-
-        self.contentLabel = BodyLabel()
-        self.contentLabel2 = BodyLabel()
-        self.contentLabel3 = BodyLabel()
-        self.contentLabel.setText("Motorola Font Packer")
-        self.contentLabel2.setText(self.tr("一款简单的摩托罗拉手机MyUI字体包打包器"))
-        self.contentLabel3.setText(self.tr("作者: Yuyuko1024"))
-
-        self.linkLabel = (
-            HyperlinkLabel(QUrl("https://github.com/Yuyuko1024/Motorola-Fonts-Packer"),
-                           self.tr('点击前往 GitHub')))
-        self.linkLabel.setUnderlineVisible(True)
-
-        self.version_label = BodyLabel()
-        self.version_label.setText(self.tr("版本: {}").format(software_version))
-
-        self.viewLayout.addWidget(self.titleLabel)
-        self.viewLayout.addWidget(self.contentLabel)
-        self.viewLayout.addWidget(self.contentLabel2)
-        self.viewLayout.addWidget(self.contentLabel3)
-        self.viewLayout.addWidget(self.linkLabel)
-        self.viewLayout.addWidget(self.version_label)
-        self.cancelButton.hide()
-        #self.widget.setMinimumSize(350)
 
 # 打包器线程
 class PackerThread(QThread):
@@ -240,9 +219,9 @@ class PackerThread(QThread):
         try:
             self.packer.pack_font(self.font_name, self.ttf_path, self.ttf_filename, self.pkg_version,
                                   self.output_dir)
-            self.finished_signal.emit(True, self.packer.translate("打包完成"))
+            self.finished_signal.emit(True, "打包完成")
         except Exception as e:
-            self.finished_signal.emit(False, self.packer.translate("打包失败: {}").format(str(e)))
+            self.finished_signal.emit(False, "打包失败")
 
     def print_output(self, message):
         self.progress_signal.emit(message)
